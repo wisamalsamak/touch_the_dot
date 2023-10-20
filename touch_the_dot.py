@@ -1,57 +1,92 @@
+"""
+Touch the Dot Game: A game where players use hand tracking to touch dots that appear on the screen.
+"""
+
 import sys
+import random  # Standard library imports first
+from typing import Tuple, Optional, Any
+import cv2  # Third-party imports next
 import numpy as np
-import cv2
-import random
 import mediapipe as mp
 
 
 class HandDetector:
-    def __init__(self):
+    """
+    Class for detecting hands in a video frame using MediaPipe.
+    """
+
+    def __init__(self) -> None:
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands()
-        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_drawing_utils = mp.solutions.drawing_utils
 
-    def process_frame(self, frame):
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        return self.hands.process(frame_rgb)
+    def process_frame(self, frame: np.ndarray) -> Any:
+        """
+        Process a frame to detect hands.
+        """
+        # pylint: disable=no-member
+        return self.hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-    def draw_landmarks(self, frame, results):
+    def draw_landmarks(self, frame: np.ndarray, results: Any) -> np.ndarray:
+        """
+        Draw hand landmarks on a frame.
+        """
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                self.mp_drawing.draw_landmarks(
+                self.mp_drawing_utils.draw_landmarks(
                     frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
         return frame
 
-    def get_index_tip_coordinates(self, frame, results):
+    @staticmethod
+    def get_index_tip_coordinates(frame: np.ndarray, results: Any) \
+            -> Optional[Tuple[int, int]]:
+        """
+        Retrieve the coordinates of the index finger tip from hand landmarks.
+        """
+        index_tip = None
         if results.multi_hand_landmarks:
-            for hand_landmark in results.multi_hand_landmarks:
-                index_tip = hand_landmark.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
-                return int(index_tip.x * frame.shape[1]), int(index_tip.y * frame.shape[0])
-        return None, None
+            for hand_landmarks in results.multi_hand_landmarks:
+                height, width, _ = frame.shape
+                index_tip = (int(hand_landmarks.landmark[8].x * width),
+                             int(hand_landmarks.landmark[8].y * height))
+        return index_tip
 
 
 class TouchGame:
-    def __init__(self):
-        self.circle_coords = None
-        self.circle_found = True
+    """
+    Class representing the Touch the Dot game.
+    """
+
+    def __init__(self) -> None:
         self.detector = HandDetector()
+        self.circle_found = True
+        self.circle_coords: Optional[Tuple[int, int]] = None
 
-    def draw_random_circle(self, frame):
-        h, w = frame.shape[:2]
-        self.circle_coords = random.randint(
-            10, w - 10), random.randint(10, h - 10)
-        return self.circle_coords
+    @staticmethod
+    def draw_random_circle(frame: np.ndarray) -> Tuple[int, int]:
+        """
+        Draw a random circle on the frame.
+        """
+        max_y, max_x, _ = frame.shape
+        coord1 = random.randint(10, max_y - 10)
+        coord2 = random.randint(10, max_x - 10)
+        return (coord2, coord1)
 
-    def check_touch(self, index_tip):
-        if index_tip[0] is not None and self.circle_coords:
-            distance = np.sqrt((index_tip[0] - self.circle_coords[0])
-                               ** 2 + (index_tip[1] - self.circle_coords[1]) ** 2)
-            if distance < 50:
-                self.circle_found = True
-                return True
+    def check_touch(self, index_tip: Optional[Tuple[int, int]]) -> bool:
+        """
+        Check if the index finger tip is touching the circle.
+        """
+        if index_tip and self.circle_coords:
+            distance = np.sqrt((index_tip[0] - self.circle_coords[0]) ** 2 +
+                               (index_tip[1] - self.circle_coords[1]) ** 2)
+            return distance < 50
         return False
 
-    def game_loop(self):
+    def game_loop(self) -> None:
+        """
+        The main game loop.
+        """
+        # pylint: disable=no-member
         cap = cv2.VideoCapture(0)
 
         if not cap.isOpened():
@@ -64,12 +99,9 @@ class TouchGame:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            # We draw a new circle only if the previous one was touched.
-            # We must ensure 'circle_found' is only True when a circle is actually found by the index tip.
             if self.circle_found:
-                self.circle_coords = self.draw_random_circle(
-                    frame)  # Store the new circle's coordinates
-                self.circle_found = False  # Reset the flag
+                self.circle_coords = self.draw_random_circle(frame)
+                self.circle_found = False
 
             results = self.detector.process_frame(frame)
             frame = self.detector.draw_landmarks(frame, results)
@@ -77,18 +109,22 @@ class TouchGame:
 
             touch_detected = self.check_touch(index_tip)
 
-            if self.circle_coords:  # Ensure there are circle coordinates before trying to draw
+            if self.circle_coords:
+                # pylint: disable=no-member
                 cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
 
+            # pylint: disable=no-member
             cv2.imshow("Frame", frame)
 
             if touch_detected:
-                self.circle_found = True  # Set the flag to draw a new circle in the next iteration
+                self.circle_found = True
 
+            # pylint: disable=no-member
             if cv2.waitKey(1) == ord('q'):
                 break
 
         cap.release()
+        # pylint: disable=no-member
         cv2.destroyAllWindows()
 
 
