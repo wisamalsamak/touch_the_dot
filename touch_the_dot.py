@@ -4,14 +4,18 @@ Touch the Dot Game: A game where players use hand tracking to touch dots that ap
 
 import sys
 import random  # Standard library imports first
+import threading
+import time
 from typing import Tuple, Optional, Any
-import cv2  # Third-party imports next
+import cv2
 import numpy as np
 import mediapipe as mp
 
 EASY_MODE = 50
 MEDIUM_MODE = 25
 HARD_MODE = 5
+
+COUNTDOWN = 60
 
 
 class HandDetector:
@@ -67,6 +71,21 @@ class TouchGame:
         self.detector = HandDetector()
         self.circle_found = True
         self.circle_coords: Optional[Tuple[int, int]] = None
+        self.game_over = False
+        self.timer = f"{COUNTDOWN}"
+
+    def countdown(self, game_time: int) -> None:
+        """
+        Countdown timer.
+        """
+        while game_time > 0 and not self.game_over:
+            _, secs = divmod(game_time, 60)
+            self.timer = "{:02d}".format(secs)
+            time.sleep(1)
+            game_time -= 1
+
+        self.game_over = True
+        print("\nTime is up!")
 
     @staticmethod
     def draw_random_circle(frame: np.ndarray) -> Tuple[int, int]:
@@ -92,6 +111,9 @@ class TouchGame:
         """
         The main game loop.
         """
+        timer_thread = threading.Thread(
+            target=self.countdown, args=(COUNTDOWN,))
+        timer_thread.start()
         # pylint: disable=no-member
         cap = cv2.VideoCapture(2)
 
@@ -120,13 +142,21 @@ class TouchGame:
                 cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
 
             # pylint: disable=no-member
+            cv2.putText(frame, str(self.timer),
+                        (frame.shape[1] - 70, 45), 5, 2, (0, 0, 255), 2)
+            # pylint: disable=no-member
             cv2.putText(frame, str(self.counter),
-                        (15, 45), 5, 2, (255, 255, 0), 2)
+                        (15, 45), 5, 2, (0, 0, 255), 2)
+            # pylint: disable=no-member
             cv2.imshow("Frame", frame)
 
             if touch_detected:
                 self.circle_found = True
                 self.counter += 1
+
+            if self.game_over:
+                print(f"Final score: {self.counter}")
+                break
 
             # pylint: disable=no-member
             if cv2.waitKey(1) == ord('e'):
@@ -144,6 +174,8 @@ class TouchGame:
         cap.release()
         # pylint: disable=no-member
         cv2.destroyAllWindows()
+
+        timer_thread.join()
 
 
 if __name__ == "__main__":
