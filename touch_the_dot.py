@@ -93,7 +93,7 @@ class TouchGame:
         The main game loop.
         """
         # pylint: disable=no-member
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(2)
 
         if not cap.isOpened():
             print("Cannot open camera")
@@ -121,7 +121,7 @@ class TouchGame:
 
             # pylint: disable=no-member
             cv2.putText(frame, str(self.counter),
-                        (15, 45), 5, 2, (0, 255, 255), 2)
+                        (15, 45), 5, 2, (255, 255, 0), 2)
             cv2.imshow("Frame", frame)
 
             if touch_detected:
