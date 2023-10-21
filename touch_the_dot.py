@@ -131,10 +131,13 @@ class TouchGame:
             # pylint: disable=no-member
             if cv2.waitKey(1) == ord('e'):
                 self.difficulty = EASY_MODE
+            # pylint: disable=no-member
             elif cv2.waitKey(1) == ord('m'):
                 self.difficulty = MEDIUM_MODE
+            # pylint: disable=no-member
             elif cv2.waitKey(1) == ord('h'):
-                self.difficulty = HARD_MODEqqq
+                self.difficulty = HARD_MODE
+            # pylint: disable=no-member
             elif cv2.waitKey(1) == ord('q'):
                 break
 
