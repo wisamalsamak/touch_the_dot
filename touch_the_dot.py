@@ -9,6 +9,10 @@ import cv2  # Third-party imports next
 import numpy as np
 import mediapipe as mp
 
+EASY_MODE = 50
+MEDIUM_MODE = 25
+HARD_MODE = 5
+
 
 class HandDetector:
     """
@@ -57,7 +61,9 @@ class TouchGame:
     Class representing the Touch the Dot game.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, difficulty: str = EASY_MODE) -> None:
+        self.difficulty = difficulty
+        self.counter = 0
         self.detector = HandDetector()
         self.circle_found = True
         self.circle_coords: Optional[Tuple[int, int]] = None
@@ -79,7 +85,7 @@ class TouchGame:
         if index_tip and self.circle_coords:
             distance = np.sqrt((index_tip[0] - self.circle_coords[0]) ** 2 +
                                (index_tip[1] - self.circle_coords[1]) ** 2)
-            return distance < 50
+            return distance < self.difficulty
         return False
 
     def game_loop(self) -> None:
@@ -114,13 +120,22 @@ class TouchGame:
                 cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
 
             # pylint: disable=no-member
+            cv2.putText(frame, str(self.counter),
+                        (15, 45), 5, 2, (0, 255, 255), 2)
             cv2.imshow("Frame", frame)
 
             if touch_detected:
                 self.circle_found = True
+                self.counter += 1
 
             # pylint: disable=no-member
-            if cv2.waitKey(1) == ord('q'):
+            if cv2.waitKey(1) == ord('e'):
+                self.difficulty = EASY_MODE
+            elif cv2.waitKey(1) == ord('m'):
+                self.difficulty = MEDIUM_MODE
+            elif cv2.waitKey(1) == ord('h'):
+                self.difficulty = HARD_MODEqqq
+            elif cv2.waitKey(1) == ord('q'):
                 break
 
         cap.release()
