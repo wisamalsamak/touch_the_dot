@@ -80,7 +80,7 @@ class TouchGame:
         """
         while game_time > 0 and not self.game_over:
             _, secs = divmod(game_time, 60)
-            self.timer = "{:02d}".format(secs)
+            self.timer = f"{secs:02d}"
             time.sleep(1)
             game_time -= 1
 
