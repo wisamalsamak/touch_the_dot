@@ -7,3 +7,10 @@
 - **Real-Time Hand Tracking:** Experience the power of advanced machine learning as the game tracks your hand movement in real time.
 - **Dynamic Dot Generation:** Dots appear in random locations, making the game unpredictable and fun.
 - **Interactive Gameplay:** Physically interact with the game using just your hand and a standard webcam.
+
+## Installation
+1. Clone the repository
+2. Create virtual environment
+3. Install the requirements
+```pip install -r requirements.txt```
+4. Run the ```touch_the_dot.py``` file
