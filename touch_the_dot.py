@@ -51,12 +51,13 @@ class HandDetector:
         """
         Retrieve the coordinates of the index finger tip from hand landmarks.
         """
-        index_tip = None
+        index_tip = []
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 height, width, _ = frame.shape
-                index_tip = (int(hand_landmarks.landmark[8].x * width),
-                             int(hand_landmarks.landmark[8].y * height))
+                index_tip_coord = (int(hand_landmarks.landmark[8].x * width),
+                                   int(hand_landmarks.landmark[8].y * height))
+                index_tip.append(index_tip_coord)
         return index_tip
 
 
@@ -102,9 +103,11 @@ class TouchGame:
         Check if the index finger tip is touching the circle.
         """
         if index_tip and self.circle_coords:
-            distance = np.sqrt((index_tip[0] - self.circle_coords[0]) ** 2 +
-                               (index_tip[1] - self.circle_coords[1]) ** 2)
-            return distance < self.difficulty
+            for index_tip_hand in index_tip:
+                distance = np.sqrt((index_tip_hand[0] - self.circle_coords[0]) ** 2 +
+                                   (index_tip_hand[1] - self.circle_coords[1]) ** 2)
+                if distance < self.difficulty:
+                    return True
         return False
 
     def game_loop(self) -> None:
@@ -115,7 +118,7 @@ class TouchGame:
             target=self.countdown, args=(COUNTDOWN,))
         timer_thread.start()
         # pylint: disable=no-member
-        cap = cv2.VideoCapture(2)
+        cap = cv2.VideoCapture(0)
 
         if not cap.isOpened():
             print("Cannot open camera")
