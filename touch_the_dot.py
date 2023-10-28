@@ -150,8 +150,14 @@ class TouchGame:
             # pylint: disable=no-member
             cv2.putText(frame, str(self.counter),
                         (15, 45), 5, 2, (0, 0, 255), 2)
+            side_panel = np.full(
+                (frame.shape[0], 200, 3), (0, 0, 0), dtype=np.uint8)
             # pylint: disable=no-member
-            cv2.imshow("Frame", frame)
+            cv2.putText(side_panel, f"Range: {self.difficulty}",
+                        (10, 45), 5, 1.5, (255, 255, 255), 2)
+            full_game = np.hstack((frame, side_panel))
+            # pylint: disable=no-member
+            cv2.imshow("Frame", full_game)
 
             if touch_detected:
                 self.circle_found = True
@@ -161,17 +167,18 @@ class TouchGame:
                 print(f"Final score: {self.counter}")
                 break
 
+            key = cv2.waitKey(1) & 0xFF
             # pylint: disable=no-member
-            if cv2.waitKey(1) == ord('e'):
+            if key == ord('e'):
                 self.difficulty = EASY_MODE
             # pylint: disable=no-member
-            elif cv2.waitKey(1) == ord('m'):
+            elif key == ord('m'):
                 self.difficulty = MEDIUM_MODE
             # pylint: disable=no-member
-            elif cv2.waitKey(1) == ord('h'):
+            elif key == ord('h'):
                 self.difficulty = HARD_MODE
             # pylint: disable=no-member
-            elif cv2.waitKey(1) == ord('q'):
+            elif key == ord('q'):
                 break
 
         cap.release()
