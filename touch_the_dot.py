@@ -15,6 +15,9 @@ EASY_MODE = 50
 MEDIUM_MODE = 25
 HARD_MODE = 5
 
+DIFFICULTY = {EASY_MODE: "Easy Mode",
+              MEDIUM_MODE: "Medium Mode", HARD_MODE: "Hard Mode"}
+
 COUNTDOWN = 60
 
 
@@ -25,7 +28,7 @@ class HandDetector:
 
     def __init__(self) -> None:
         self.mp_hands = mp.solutions.hands
-        self.hands = self.mp_hands.Hands()
+        self.hands = self.mp_hands.Hands(max_num_hands=1)
         self.mp_drawing_utils = mp.solutions.drawing_utils
 
     def process_frame(self, frame: np.ndarray) -> Any:
@@ -124,6 +127,9 @@ class TouchGame:
             print("Cannot open camera")
             sys.exit()
 
+        side_panel = np.full(
+            (480, 270, 3), (0, 0, 0), dtype=np.uint8)
+
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -144,17 +150,16 @@ class TouchGame:
                 # pylint: disable=no-member
                 cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
 
+            side_panel[:] = (0, 0, 0)
             # pylint: disable=no-member
-            cv2.putText(frame, str(self.timer),
-                        (frame.shape[1] - 70, 45), 5, 2, (0, 0, 255), 2)
+            cv2.putText(side_panel, f"Time: {self.timer}",
+                        (10, 35), 5, 1.5, (255, 255, 255), 2)
             # pylint: disable=no-member
-            cv2.putText(frame, str(self.counter),
-                        (15, 45), 5, 2, (0, 0, 255), 2)
-            side_panel = np.full(
-                (frame.shape[0], 200, 3), (0, 0, 0), dtype=np.uint8)
+            cv2.putText(side_panel, f"Count: {self.counter}",
+                        (10, 70), 5, 1.5, (255, 255, 255), 2)
             # pylint: disable=no-member
-            cv2.putText(side_panel, f"Range: {self.difficulty}",
-                        (10, 45), 5, 1.5, (255, 255, 255), 2)
+            cv2.putText(side_panel, f"{DIFFICULTY[self.difficulty]}",
+                        (5, 460), 5, 1.5, (255, 255, 255), 2)
             full_game = np.hstack((frame, side_panel))
             # pylint: disable=no-member
             cv2.imshow("Frame", full_game)
