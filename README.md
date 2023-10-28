@@ -1,3 +1,5 @@
+[![Pylint](https://github.com/wisamalsamak/touch_the_dot/actions/workflows/pylint.yml/badge.svg?branch=main)](https://github.com/wisamalsamak/touch_the_dot/actions/workflows/pylint.yml)
+
 # Touch the Dot Game
 
 ## Overview
