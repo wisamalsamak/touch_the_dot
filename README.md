@@ -12,7 +12,7 @@
 
 ## Installation
 1. Clone the repository
-2. Create virtual environment
+2. Create a virtual environment
 3. Install the requirements
 ```pip install -r requirements.txt```
 4. Run the ```touch_the_dot.py``` file
