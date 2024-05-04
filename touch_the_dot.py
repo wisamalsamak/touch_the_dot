@@ -334,6 +334,7 @@ class TouchGame:
 
         while True:
             if self.game_over:
+                print(f"Total count: {counter}")
                 break
             ret, frame = cap.read()
             if not ret:
@@ -350,7 +351,7 @@ class TouchGame:
                 )
 
             if not self.game_started:
-                self.add_text(frame, "Press 's' to start", (50, frame.shape[0] // 2))
+                self.add_text(frame, "Press 's' to start", (150, frame.shape[0] // 2))
 
             counter += self.process_frame_actions(frame)
 
