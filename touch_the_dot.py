@@ -3,7 +3,7 @@ Touch the Dot Game: A game where players use hand tracking to touch dots that ap
 """
 
 import sys
-import random  # Standard library imports first
+import random
 import threading
 import time
 from typing import List, Tuple, Optional, Any
@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
+# pylint: disable=E1101
 
 class Modes(Enum):
     """
@@ -24,7 +25,7 @@ class Modes(Enum):
     HARD = 5
 
 
-@ dataclass
+@dataclass
 class Shapes:
     """
     Data class with sizes of frame and side panel.
@@ -49,14 +50,27 @@ class HandDetector:
 
     def process_frame(self, frame: np.ndarray) -> Any:
         """
-        Process a frame to detect hands.
+        Processes a video frame to detect hands and extract landmark data using MediaPipe.
+
+        Args:
+            frame (np.ndarray): The current frame from the video capture device.
+
+        Returns:
+            Any: The processed results containing hand landmark information.
         """
-        # pylint: disable=no-member
         return self.hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
     def draw_landmarks(self, frame: np.ndarray, results: Any) -> np.ndarray:
         """
-        Draw hand landmarks on a frame.
+        Draws hand landmarks on the video frame using the results from MediaPipe hand tracking.
+
+        Args:
+            frame (np.ndarray): The current frame from the video capture device to draw
+            landmarks on.
+            results (Any): The results from hand tracking that contain landmark data.
+
+        Returns:
+            np.ndarray: The frame with hand landmarks drawn.
         """
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
@@ -64,10 +78,18 @@ class HandDetector:
                     frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
         return frame
 
-    @ staticmethod
+    @staticmethod
     def get_index_tip_coordinates(frame: np.ndarray, results: Any) -> Optional[Tuple[int, int]]:
         """
-        Retrieve the coordinates of the index finger tip from hand landmarks.
+        Retrieves the coordinates of the index finger tips detected in the frame.
+
+        Args:
+            frame (np.ndarray): The current frame from the video capture device.
+            results (Any): The results containing hand landmark data.
+
+        Returns:
+            Optional[List[Tuple[int, int]]]: A list of tuples containing the x and y coordinates of
+            index finger tips, or None if no hands are detected.
         """
         index_tip = []
         if results.multi_hand_landmarks:
@@ -78,24 +100,36 @@ class HandDetector:
                 index_tip.append(index_tip_coord)
         return index_tip
 
+# pylint: disable=R0903
+class ExternalGameAttributes:
+    """
+    Class to hold external game attributes like difficulty and resize factor.
+    """
+    def __init__(self, difficulty: int = Modes.EASY.value, resize_factor: float = 1):
+        self.difficulty = difficulty
+        self.resize_factor = resize_factor
+
 
 class TouchGame:
     """
     Class representing the Touch the Dot game.
     """
 
-    def __init__(self, difficulty: str = Modes.EASY.value) -> None:
-        self.difficulty = difficulty
+    def __init__(self) -> None:
+        self.attributes = ExternalGameAttributes()
         self.detector = HandDetector()
-        self.circle_found = True
-        self.game_over = False
         self.circle_coords: Optional[Tuple[int, int]] = None
         self.timer = f"{COUNTDOWN}"
-        self.resize_factor = 1
+        self.game_started = False
+        self.circle_found = True
+        self.game_over = False
 
     def countdown(self, game_time: int) -> None:
         """
-        Countdown timer.
+        Countdown timer for the game's duration.
+
+        Args:
+            game_time (int): Total game time in seconds.
         """
         while game_time > 0 and not self.game_over:
             _, secs = divmod(game_time, 60)
@@ -109,7 +143,13 @@ class TouchGame:
     @staticmethod
     def draw_random_circle(frame: np.ndarray) -> Tuple[int, int]:
         """
-        Draw a random circle on the frame.
+        Draw a random circle within the frame.
+
+        Args:
+            frame (np.ndarray): The current video frame.
+
+        Returns:
+            Tuple[int, int]: Coordinates of the circle's center.
         """
         max_y, max_x, _ = frame.shape
         coord1 = random.randint(10, max_y - 10)
@@ -119,26 +159,42 @@ class TouchGame:
     def check_touch(self, index_tip: Optional[Tuple[int, int]]) -> bool:
         """
         Check if the index finger tip is touching the circle.
+
+        Args:
+            index_tip (Optional[Tuple[int, int]]): Coordinates of the index finger tip.
+
+        Returns:
+            bool: True if touching the circle, False otherwise.
         """
         if index_tip and self.circle_coords:
             for index_tip_hand in index_tip:
                 distance = np.sqrt((index_tip_hand[0] - self.circle_coords[0]) ** 2 +
                                    (index_tip_hand[1] - self.circle_coords[1]) ** 2)
-                if distance < self.difficulty:
+                if distance < self.attributes.difficulty:
                     return True
         return False
 
     @staticmethod
     def add_text(frame: np.ndarray, text: str, position: Tuple[int, int]) -> None:
         """
-        Write text onto a frame at a certain postion.
+        Write text onto a frame at a specified position.
+
+        Args:
+            frame (np.ndarray): Frame on which text is to be written.
+            text (str): Text to write.
+            position (Tuple[int, int]): Coordinates for the text placement.
         """
-        # pylint: disable=no-member
         cv2.putText(frame, text, position, 5, 1.5, (255, 255, 255), 2)
 
     def find_index_tip(self, frame: np.ndarray) -> List[Tuple[int, int]]:
         """
-        Find the tip of the index finger.
+        Find the tip of the index finger using the hand detector.
+
+        Args:
+            frame (np.ndarray): The current frame from video capture.
+
+        Returns:
+            List[Tuple[int, int]]: A list of coordinates for index finger tips detected.
         """
         results = self.detector.process_frame(frame)
         frame = self.detector.draw_landmarks(frame, results)
@@ -147,48 +203,114 @@ class TouchGame:
 
     def _resize_frame(self, side_panel: np.ndarray, key: int) -> np.ndarray:
         """
-        Resize frame.
+        Resize the game frame based on user input to change scale.
+
+        Args:
+            side_panel (np.ndarray): The current side panel.
+            key (int): Keyboard input used to determine scaling.
+
+        Returns:
+            np.ndarray: The resized side panel.
         """
-        # pylint: disable=no-member
         if key == ord('1'):
-            self.resize_factor = 1
+            self.attributes.resize_factor = 1
             side_panel = cv2.resize(
                 side_panel, (Shapes.side_panel_width, Shapes.frame_height))
         elif key == ord('2'):
-            self.resize_factor = 1.5
+            self.attributes.resize_factor = 1.5
             side_panel = cv2.resize(
                 side_panel, (Shapes.side_panel_width,
-                             int(Shapes.frame_height * self.resize_factor)))
+                             int(Shapes.frame_height * self.attributes.resize_factor)))
         return side_panel
 
     def _set_difficulty(self, key: int) -> int:
         """
-        Set game difficulty.
+        Set the game difficulty based on a key press.
+
+        Args:
+            key (int): Key pressed to set the difficulty level.
         """
         if key == ord('e'):
-            self.difficulty = Modes.EASY.value
+            self.attributes.difficulty = Modes.EASY.value
         elif key == ord('m'):
-            self.difficulty = Modes.MEDIUM.value
+            self.attributes.difficulty = Modes.MEDIUM.value
         elif key == ord('h'):
-            self.difficulty = Modes.HARD.value
+            self.attributes.difficulty = Modes.HARD.value
+
+    def handle_key_input(self, key: int, side_panel: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Handles key inputs to control game functions like starting, changing difficulty,
+        resizing the frame, and exiting.
+
+        Args:
+            key (int): The key pressed by the user.
+            side_panel (np.ndarray): The side panel part of the game UI.
+
+        Returns:
+            Optional[np.ndarray]: The potentially resized side panel or None if the game
+            is to be exited.
+        """
+        if key == ord('s') and not self.game_started:
+            self.start_game()
+        elif key in {ord('e'), ord('m'), ord('h')}:
+            self._set_difficulty(key)
+        elif key in {ord('1'), ord('2')}:
+            return self._resize_frame(side_panel, key)
+        elif key == ord('q'):
+            self.game_over = True
+            return None
+        return side_panel
+
+    def start_game(self) -> None:
+        """
+        Starts the game by setting the game_started flag to True and starting the timer thread.
+        """
+        self.game_started = True
+        timer_thread = threading.Thread(target=self.countdown, args=(COUNTDOWN,))
+        if not timer_thread.is_alive():
+            timer_thread.start()
+
+    def process_frame_actions(self, frame: np.ndarray) -> int:
+        """
+        Processes frame actions when the game has started, checking for touches and managing
+        the game state.
+
+        Args:
+            frame (np.ndarray): The current frame from the video capture.
+            side_panel (np.ndarray): The side panel used for displaying game information.
+
+        Returns:
+            int: The increment to the score counter if a touch is detected.
+        """
+        if self.game_started:
+            if self.circle_found:
+                self.circle_coords = self.draw_random_circle(frame)
+                self.circle_found = False
+
+            if self.circle_coords:
+                cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
+
+            index_tip = self.find_index_tip(frame)
+            touch_detected = self.check_touch(index_tip)
+
+            if touch_detected:
+                self.circle_found = True
+                return 1
+        return 0
 
     def game_loop(self) -> None:
         """
-        The main game loop.
+        Main game loop that manages the overall game operations including capturing frames,
+        processing actions, and handling UI updates.
         """
         counter = 0
-        timer_thread = threading.Thread(
-            target=self.countdown, args=(COUNTDOWN,))
-        timer_thread.start()
-        # pylint: disable=no-member
         cap = cv2.VideoCapture(0)
-
         if not cap.isOpened():
             print("Cannot open camera")
             sys.exit()
 
-        side_panel = np.full(
-            (Shapes.frame_height, Shapes.side_panel_width, 3), (0, 0, 0), dtype=np.uint8)
+        side_panel = np.full((Shapes.frame_height, Shapes.side_panel_width, 3), (0, 0, 0),
+                             dtype=np.uint8)
 
         while True:
             ret, frame = cap.read()
@@ -196,55 +318,34 @@ class TouchGame:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            if self.resize_factor != 1:
-                frame = cv2.resize(
-                    frame, (int(frame.shape[1] * self.resize_factor),
-                            int(frame.shape[0] * self.resize_factor)))
+            if self.attributes.resize_factor != 1:
+                frame = cv2.resize(frame, (int(frame.shape[1] * self.attributes.resize_factor),
+                                           int(frame.shape[0] * self.attributes.resize_factor)))
 
-            if self.circle_found:
-                self.circle_coords = self.draw_random_circle(frame)
-                self.circle_found = False
+            if not self.game_started:
+                self.add_text(frame, "Press 's' to start", (50, frame.shape[0] // 2))
 
-            index_tip = self.find_index_tip(frame)
-
-            touch_detected = self.check_touch(index_tip)
-
-            if self.circle_coords:
-                # pylint: disable=no-member
-                cv2.circle(frame, self.circle_coords, 5, (255, 0, 0), -1)
+            counter += self.process_frame_actions(frame)
 
             side_panel[:] = (0, 0, 0)
             self.add_text(side_panel, f"Time: {self.timer}", (10, 35))
             self.add_text(side_panel, f"Count: {counter}", (10, 70))
             self.add_text(
-                side_panel, f"Mode: {Modes(self.difficulty).name}", (10, side_panel.shape[0] - 20))
+                side_panel, f"Mode: {Modes(self.attributes.difficulty).name}",
+                (10, side_panel.shape[0] - 20))
 
             full_game = np.hstack((frame, side_panel))
             cv2.imshow("Frame", full_game)
 
-            if touch_detected:
-                self.circle_found = True
-                counter += 1
-
-            if self.game_over:
-                print(f"Final score: {counter}")
-                break
-
             key = cv2.waitKey(1) & 0xFF
-            # pylint: disable=no-member
-            if key == ord('e') or key == ord('m') or key == ord('h'):
-                self._set_difficulty(key)
-            elif key == ord('1') or key == ord('2'):
-                side_panel = self._resize_frame(side_panel, key)
-            elif key == ord('q'):
+            new_side_panel = self.handle_key_input(key, side_panel)
+            if new_side_panel is None:
                 break
+
+            side_panel = new_side_panel
 
         cap.release()
-        # pylint: disable=no-member
         cv2.destroyAllWindows()
-
-        timer_thread.join()
-
 
 if __name__ == "__main__":
     game = TouchGame()
