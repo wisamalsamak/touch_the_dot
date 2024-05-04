@@ -15,6 +15,7 @@ import mediapipe as mp
 
 # pylint: disable=E1101
 
+
 class Modes(Enum):
     """
     Enum class with game modes: easy, medium and hard.
@@ -99,6 +100,7 @@ class HandDetector:
                                    int(hand_landmarks.landmark[8].y * height))
                 index_tip.append(index_tip_coord)
         return index_tip
+
 
 # pylint: disable=R0903
 class ExternalGameAttributes:
@@ -272,12 +274,13 @@ class TouchGame:
 
     def process_frame_actions(self, frame: np.ndarray) -> int:
         """
-        Processes frame actions when the game has started, checking for touches and managing
-        the game state.
+        Processes frame actions when the game has started, checking for touches
+        and managing the game state.
 
         Args:
             frame (np.ndarray): The current frame from the video capture.
-            side_panel (np.ndarray): The side panel used for displaying game information.
+            side_panel (np.ndarray): The side panel used for displaying
+            game information.
 
         Returns:
             int: The increment to the score counter if a touch is detected.
@@ -300,8 +303,8 @@ class TouchGame:
 
     def game_loop(self) -> None:
         """
-        Main game loop that manages the overall game operations including capturing frames,
-        processing actions, and handling UI updates.
+        Main game loop that manages the overall game operations including capturing
+        frames, processing actions, and handling UI updates.
         """
         counter = 0
         cap = cv2.VideoCapture(0)
