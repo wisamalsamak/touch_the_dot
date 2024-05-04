@@ -36,7 +36,7 @@ class Shapes:
     side_panel_width = 280
 
 
-COUNTDOWN = 60
+COUNTDOWN = 10
 
 
 class HandDetector:
@@ -332,6 +332,8 @@ class TouchGame:
         )
 
         while True:
+            if self.game_over:
+                break
             ret, frame = cap.read()
             if not ret:
                 print("Can't receive frame (stream end?). Exiting ...")
