@@ -61,7 +61,8 @@ class HandDetector:
         """
         return self.hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-    def draw_landmarks(self, frame: np.ndarray, results: Any) -> np.ndarray:
+    @staticmethod
+    def draw_landmarks(frame: np.ndarray, results: Any) -> np.ndarray:
         """
         Draws hand landmarks on the video frame using the results from MediaPipe hand tracking.
 
@@ -75,9 +76,9 @@ class HandDetector:
         """
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                self.mp_drawing_utils.draw_landmarks(
-                    frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS
-                )
+                tip_x = int(hand_landmarks.landmark[8].x * frame.shape[1])
+                tip_y = int(hand_landmarks.landmark[8].y * frame.shape[0])
+                cv2.circle(frame, (tip_x, tip_y), 5, (0, 255, 0), -1)
         return frame
 
     @staticmethod
