@@ -76,11 +76,14 @@ class HandDetector:
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 self.mp_drawing_utils.draw_landmarks(
-                    frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+                    frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS
+                )
         return frame
 
     @staticmethod
-    def get_index_tip_coordinates(frame: np.ndarray, results: Any) -> Optional[Tuple[int, int]]:
+    def get_index_tip_coordinates(
+        frame: np.ndarray, results: Any
+    ) -> Optional[Tuple[int, int]]:
         """
         Retrieves the coordinates of the index finger tips detected in the frame.
 
@@ -96,8 +99,10 @@ class HandDetector:
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 height, width, _ = frame.shape
-                index_tip_coord = (int(hand_landmarks.landmark[8].x * width),
-                                   int(hand_landmarks.landmark[8].y * height))
+                index_tip_coord = (
+                    int(hand_landmarks.landmark[8].x * width),
+                    int(hand_landmarks.landmark[8].y * height),
+                )
                 index_tip.append(index_tip_coord)
         return index_tip
 
@@ -107,6 +112,7 @@ class ExternalGameAttributes:
     """
     Class to hold external game attributes like difficulty and resize factor.
     """
+
     def __init__(self, difficulty: int = Modes.EASY.value, resize_factor: float = 1):
         self.difficulty = difficulty
         self.resize_factor = resize_factor
@@ -170,8 +176,10 @@ class TouchGame:
         """
         if index_tip and self.circle_coords:
             for index_tip_hand in index_tip:
-                distance = np.sqrt((index_tip_hand[0] - self.circle_coords[0]) ** 2 +
-                                   (index_tip_hand[1] - self.circle_coords[1]) ** 2)
+                distance = np.sqrt(
+                    (index_tip_hand[0] - self.circle_coords[0]) ** 2
+                    + (index_tip_hand[1] - self.circle_coords[1]) ** 2
+                )
                 if distance < self.attributes.difficulty:
                     return True
         return False
@@ -214,15 +222,20 @@ class TouchGame:
         Returns:
             np.ndarray: The resized side panel.
         """
-        if key == ord('1'):
+        if key == ord("1"):
             self.attributes.resize_factor = 1
             side_panel = cv2.resize(
-                side_panel, (Shapes.side_panel_width, Shapes.frame_height))
-        elif key == ord('2'):
+                side_panel, (Shapes.side_panel_width, Shapes.frame_height)
+            )
+        elif key == ord("2"):
             self.attributes.resize_factor = 1.5
             side_panel = cv2.resize(
-                side_panel, (Shapes.side_panel_width,
-                             int(Shapes.frame_height * self.attributes.resize_factor)))
+                side_panel,
+                (
+                    Shapes.side_panel_width,
+                    int(Shapes.frame_height * self.attributes.resize_factor),
+                ),
+            )
         return side_panel
 
     def _set_difficulty(self, key: int) -> int:
@@ -232,14 +245,16 @@ class TouchGame:
         Args:
             key (int): Key pressed to set the difficulty level.
         """
-        if key == ord('e'):
+        if key == ord("e"):
             self.attributes.difficulty = Modes.EASY.value
-        elif key == ord('m'):
+        elif key == ord("m"):
             self.attributes.difficulty = Modes.MEDIUM.value
-        elif key == ord('h'):
+        elif key == ord("h"):
             self.attributes.difficulty = Modes.HARD.value
 
-    def handle_key_input(self, key: int, side_panel: np.ndarray) -> Optional[np.ndarray]:
+    def handle_key_input(
+        self, key: int, side_panel: np.ndarray
+    ) -> Optional[np.ndarray]:
         """
         Handles key inputs to control game functions like starting, changing difficulty,
         resizing the frame, and exiting.
@@ -252,13 +267,13 @@ class TouchGame:
             Optional[np.ndarray]: The potentially resized side panel or None if the game
             is to be exited.
         """
-        if key == ord('s') and not self.game_started:
+        if key == ord("s") and not self.game_started:
             self.start_game()
-        elif key in {ord('e'), ord('m'), ord('h')}:
+        elif key in {ord("e"), ord("m"), ord("h")}:
             self._set_difficulty(key)
-        elif key in {ord('1'), ord('2')}:
+        elif key in {ord("1"), ord("2")}:
             return self._resize_frame(side_panel, key)
-        elif key == ord('q'):
+        elif key == ord("q"):
             self.game_over = True
             return None
         return side_panel
@@ -312,8 +327,9 @@ class TouchGame:
             print("Cannot open camera")
             sys.exit()
 
-        side_panel = np.full((Shapes.frame_height, Shapes.side_panel_width, 3), (0, 0, 0),
-                             dtype=np.uint8)
+        side_panel = np.full(
+            (Shapes.frame_height, Shapes.side_panel_width, 3), (0, 0, 0), dtype=np.uint8
+        )
 
         while True:
             ret, frame = cap.read()
@@ -322,8 +338,13 @@ class TouchGame:
                 break
 
             if self.attributes.resize_factor != 1:
-                frame = cv2.resize(frame, (int(frame.shape[1] * self.attributes.resize_factor),
-                                           int(frame.shape[0] * self.attributes.resize_factor)))
+                frame = cv2.resize(
+                    frame,
+                    (
+                        int(frame.shape[1] * self.attributes.resize_factor),
+                        int(frame.shape[0] * self.attributes.resize_factor),
+                    ),
+                )
 
             if not self.game_started:
                 self.add_text(frame, "Press 's' to start", (50, frame.shape[0] // 2))
@@ -334,8 +355,10 @@ class TouchGame:
             self.add_text(side_panel, f"Time: {self.timer}", (10, 35))
             self.add_text(side_panel, f"Count: {counter}", (10, 70))
             self.add_text(
-                side_panel, f"Mode: {Modes(self.attributes.difficulty).name}",
-                (10, side_panel.shape[0] - 20))
+                side_panel,
+                f"Mode: {Modes(self.attributes.difficulty).name}",
+                (10, side_panel.shape[0] - 20),
+            )
 
             full_game = np.hstack((frame, side_panel))
             cv2.imshow("Frame", full_game)
@@ -349,6 +372,7 @@ class TouchGame:
 
         cap.release()
         cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     game = TouchGame()
