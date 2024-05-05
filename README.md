@@ -5,6 +5,10 @@
 # Touch the Dot Game
 "Touch the Dot" is an interactive game that utilizes computer vision to create a fun and engaging experience. Players use hand tracking to touch dots that randomly appear on the screen. The game leverages the power of the MediaPipe framework for hand detection and OpenCV for image processing, creating a seamless real-time gaming experience.
 
+## Demo
+https://github.com/wisamalsamak/touch_the_dot/assets/56346869/effd37cb-0c17-4b58-98de-fd4ace1e95e1
+
+
 ## Features
 - **Real-Time Hand Tracking:** Experience the power of advanced machine learning as the game tracks your hand movement in real-time.
 - **Dynamic Dot Generation:** Dots appear in random locations, making the game unpredictable and fun.
