@@ -36,7 +36,7 @@ class Shapes:
     side_panel_width = 280
 
 
-COUNTDOWN = 10
+COUNTDOWN = 60
 
 
 class HandDetector:
